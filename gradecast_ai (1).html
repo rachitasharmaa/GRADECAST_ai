@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>GradeCast AI</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080E;--surface:#0F0F18;--card:#14141E;--border:#1E1E2E;
+  --accent:#6C63FF;--accent2:#FF6584;--accent3:#43E8A0;
+  --text:#EEEEFF;--muted:#6868A0;--warn:#FFB347;
+  --font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--surface)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.bg-glow{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.bg-glow::before{content:'';position:absolute;top:-20%;left:-10%;width:55%;height:55%;background:radial-gradient(ellipse,rgba(108,99,255,.1) 0%,transparent 70%);animation:da 14s ease-in-out infinite alternate}
+.bg-glow::after{content:'';position:absolute;bottom:-20%;right:-10%;width:45%;height:45%;background:radial-gradient(ellipse,rgba(67,232,160,.07) 0%,transparent 70%);animation:db 18s ease-in-out infinite alternate}
+@keyframes da{0%{transform:translate(0,0)}100%{transform:translate(4%,7%)}}
+@keyframes db{0%{transform:translate(0,0)}100%{transform:translate(-4%,-5%)}}
+#root{position:relative;z-index:1;min-height:100vh}
+
+/* LOGIN */
+.login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+.logo{font-family:var(--font-head);font-size:3rem;font-weight:800;letter-spacing:-1.5px;margin-bottom:.2rem;text-align:center}
+.logo span{color:var(--accent)}
+.logo-sub{color:var(--muted);font-size:.88rem;margin-bottom:2.5rem;text-align:center;letter-spacing:.04em}
+.lcard{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2.2rem 2.5rem;width:100%;max-width:420px}
+.lcard h2{font-family:var(--font-head);font-size:1.2rem;font-weight:700;margin-bottom:1.6rem}
+.fg{margin-bottom:1.1rem}
+.fg label{display:block;font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;margin-bottom:.38rem}
+.fg input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.72rem 1rem;color:var(--text);font-family:var(--font-body);font-size:.9rem;outline:none;transition:border-color .18s}
+.fg input:focus{border-color:var(--accent)}
+.fg input::placeholder{color:var(--muted)}
+.lbtn{width:100%;padding:.82rem;border:none;border-radius:11px;font-family:var(--font-head);font-size:.95rem;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;transition:all .2s;margin-bottom:.7rem}
+.lbtn:hover{background:#5952d6;transform:translateY(-1px);box-shadow:0 10px 30px rgba(108,99,255,.3)}
+.lbtn.sec{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.lbtn.sec:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px);box-shadow:none}
+.auth-switch{text-align:center;font-size:.8rem;color:var(--muted);margin-top:.4rem}
+.auth-switch a{color:var(--accent);cursor:pointer;text-decoration:underline}
+.role-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1.1rem}
+.role-opt{padding:.65rem;border:1px solid var(--border);border-radius:10px;text-align:center;cursor:pointer;transition:all .18s;font-size:.82rem;font-weight:600;color:var(--muted)}
+.role-opt:hover{border-color:var(--accent);color:var(--text)}
+.role-opt.sel{border-color:var(--accent);background:rgba(108,99,255,.12);color:var(--accent)}
+.role-opt.sel.t{border-color:var(--accent3);background:rgba(67,232,160,.1);color:var(--accent3)}
+.err{background:rgba(255,101,132,.08);border:1px solid rgba(255,101,132,.2);border-radius:8px;padding:.55rem .85rem;font-size:.8rem;color:var(--accent2);margin-bottom:.9rem}
+.ok{background:rgba(67,232,160,.08);border:1px solid rgba(67,232,160,.2);border-radius:8px;padding:.55rem .85rem;font-size:.8rem;color:var(--accent3);margin-bottom:.9rem}
+.divider{display:flex;align-items:center;gap:.8rem;margin:.5rem 0;color:var(--muted);font-size:.75rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.8rem;border-bottom:1px solid var(--border);background:rgba(15,15,24,.97);position:sticky;top:0;z-index:100}
+.tlogo{font-family:var(--font-head);font-size:1.35rem;font-weight:800;letter-spacing:-.5px}
+.tlogo span{color:var(--accent)}
+.tright{display:flex;align-items:center;gap:.9rem}
+.rbadge{background:rgba(108,99,255,.14);border:1px solid rgba(108,99,255,.28);border-radius:20px;padding:.28rem .8rem;font-size:.72rem;font-weight:700;color:var(--accent);letter-spacing:.07em;text-transform:uppercase}
+.rbadge.t{background:rgba(67,232,160,.1);border-color:rgba(67,232,160,.25);color:var(--accent3)}
+.uname{font-size:.82rem;color:var(--muted)}
+.logoutbtn{background:transparent;border:1px solid var(--border);border-radius:8px;padding:.38rem .85rem;color:var(--muted);font-size:.78rem;cursor:pointer;transition:all .18s;font-family:var(--font-body)}
+.logoutbtn:hover{border-color:var(--accent2);color:var(--accent2)}
+
+/* TABS */
+.tabs{display:flex;gap:.4rem;padding:1.4rem 1.8rem 0;border-bottom:1px solid var(--border);background:var(--surface)}
+.tab{background:transparent;border:none;padding:.58rem 1.15rem;font-family:var(--font-head);font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;border-radius:8px 8px 0 0;border-bottom:2px solid transparent;transition:all .18s;margin-bottom:-1px}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(108,99,255,.07)}
+.tab:hover:not(.active){color:var(--text)}
+.cbadge{display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;font-size:.6rem;font-weight:700;width:16px;height:16px;border-radius:50%;margin-left:5px;vertical-align:middle}
+
+/* CONTENT */
+.content{padding:1.8rem;max-width:1080px;margin:0 auto;width:100%}
+.stitle{font-family:var(--font-head);font-size:1.45rem;font-weight:700;margin-bottom:.25rem}
+.sdesc{color:var(--muted);font-size:.85rem;margin-bottom:1.8rem}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.4rem}
+
+/* SLIDERS */
+.sg{margin-bottom:1.25rem}
+.sl-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.38rem}
+.sl-row span{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.sl-row strong{font-size:.98rem;font-weight:700;color:var(--text);font-family:var(--font-head)}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;background:var(--border);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 10px rgba(108,99,255,.55);transition:transform .13s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+input[type=range].g::-webkit-slider-thumb{background:var(--accent3);box-shadow:0 0 10px rgba(67,232,160,.5)}
+input[type=range].o::-webkit-slider-thumb{background:var(--warn);box-shadow:0 0 10px rgba(255,179,71,.5)}
+input[type=range].p::-webkit-slider-thumb{background:#c084fc;box-shadow:0 0 10px rgba(192,132,252,.5)}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+@media(max-width:640px){.g2{grid-template-columns:1fr}.g3{grid-template-columns:1fr 1fr}}
+
+/* STAT CARDS */
+.sc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.3rem}
+.sc-lbl{font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;margin-bottom:.3rem}
+.sc-val{font-family:var(--font-head);font-size:1.75rem;font-weight:800}
+.c-a{color:var(--accent)}.c-g{color:var(--accent3)}.c-w{color:var(--warn)}
+
+/* PREDICT BUTTON */
+.pbtn{width:100%;padding:.9rem;background:linear-gradient(135deg,#6C63FF,#9b8cff);border:none;border-radius:12px;font-family:var(--font-head);font-size:.95rem;font-weight:700;color:#fff;cursor:pointer;letter-spacing:.03em;transition:all .22s;margin-top:.4rem}
+.pbtn:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(108,99,255,.38)}
+.pbtn:active{transform:translateY(0)}
+.api-note{font-size:.72rem;color:var(--muted);margin-top:.5rem;text-align:center}
+
+/* RESULT */
+.rcard{background:linear-gradient(135deg,rgba(108,99,255,.1),rgba(67,232,160,.06));border:1px solid rgba(108,99,255,.25);border-radius:16px;padding:1.5rem;animation:fi .35s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.grade-big{font-family:var(--font-head);font-size:4.5rem;font-weight:800;line-height:1;margin:.4rem 0}
+.grade-lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.grade-pct{font-size:.83rem;color:var(--muted);margin-top:.2rem}
+.flist{list-style:none;margin-top:.9rem}
+.flist li{display:flex;align-items:flex-start;gap:.5rem;padding:.45rem .7rem;border-radius:8px;font-size:.82rem;margin-bottom:.35rem;line-height:1.45}
+.flist li.g{background:rgba(67,232,160,.07);color:#7dffc2}
+.flist li.w{background:rgba(255,179,71,.07);color:#ffd080}
+
+/* PLACEHOLDER */
+.ph{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:240px;color:var(--muted);font-size:.88rem;gap:.55rem;border-radius:16px;border:1px dashed var(--border)}
+.ph-icon{font-size:2.8rem;opacity:.5}
+
+/* HISTORY TABLE */
+.htbl{width:100%;border-collapse:collapse;font-size:.82rem}
+.htbl th{padding:.55rem .85rem;text-align:left;font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border)}
+.htbl td{padding:.6rem .85rem;border-bottom:1px solid rgba(255,255,255,.04)}
+.htbl tr:last-child td{border-bottom:none}
+.gpill{display:inline-block;border-radius:6px;padding:.12rem .55rem;font-weight:700;font-size:.8rem}
+.empty{text-align:center;padding:2.5rem;color:var(--muted);font-size:.88rem}
+.chart-wrap{position:relative;height:220px;margin-top:.6rem}
+
+/* COMPARE */
+.srow{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;margin-bottom:.75rem}
+.srow-hdr{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.cgrid{display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr 1fr;gap:.75rem}
+@media(max-width:680px){.cgrid{grid-template-columns:1fr 1fr}}
+.ni{display:flex;flex-direction:column;gap:.28rem}
+.ni label{font-size:.68rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.ni input[type=text],.ni input[type=number]{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.42rem .65rem;color:var(--text);font-size:.84rem;font-family:var(--font-body);outline:none;width:100%;transition:border-color .18s}
+.ni input:focus{border-color:var(--accent)}
+.cbtn{padding:.72rem 1.8rem;background:var(--accent3);border:none;border-radius:10px;font-family:var(--font-head);font-size:.88rem;font-weight:700;color:#06100C;cursor:pointer;transition:all .2s;letter-spacing:.03em;margin-top:.5rem}
+.cbtn:hover{background:#38d490;transform:translateY(-1px)}
+.nc-sel{display:flex;gap:.4rem;margin-top:.5rem;flex-wrap:wrap}
+.nc-btn{padding:.28rem .75rem;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-weight:700;font-size:.82rem;font-family:var(--font-body);transition:all .15s}
+.nc-btn.sel{border-color:var(--accent);background:rgba(108,99,255,.14);color:var(--accent)}
+
+/* COMPARE RESULT TABLE */
+.ctbl{width:100%;border-collapse:collapse;font-size:.81rem;margin-top:1rem}
+.ctbl th{padding:.55rem .8rem;text-align:left;font-size:.67rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
+.ctbl td{padding:.58rem .8rem;border-bottom:1px solid rgba(255,255,255,.04)}
+.best{color:var(--accent3);font-weight:700}
+.low{color:var(--accent2)}
+
+.clr-btn{background:transparent;border:1px solid var(--border);border-radius:8px;padding:.35rem .9rem;color:var(--muted);cursor:pointer;font-size:.78rem;font-family:var(--font-body);margin-top:.8rem;transition:all .15s}
+.clr-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div id="root"></div>
+<script>
+// ── LOCALSTORAGE AUTH & DATA PERSISTENCE ──
+// Users stored as: gc_users = { email: {name,role,password,history,cmpResults,cmpCount} }
+// Session: gc_session = { email }
+
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem('gc_users') || '{}'); } catch(e){ return {}; }
+}
+function saveUsers(u) {
+  try { localStorage.setItem('gc_users', JSON.stringify(u)); } catch(e){}
+}
+function getSession() {
+  try { return JSON.parse(localStorage.getItem('gc_session') || 'null'); } catch(e){ return null; }
+}
+function saveSession(email) {
+  try { localStorage.setItem('gc_session', JSON.stringify({email:email})); } catch(e){}
+}
+function clearSession() {
+  try { localStorage.removeItem('gc_session'); } catch(e){}
+}
+function getUserData(email) {
+  var users = getUsers();
+  return users[email] || null;
+}
+function saveUserData(email, data) {
+  var users = getUsers();
+  users[email] = data;
+  saveUsers(users);
+}
+// Simple hash (not cryptographic, but fine for local storage demo)
+function hashPw(pw) {
+  var h = 0;
+  for (var i = 0; i < pw.length; i++) {
+    h = ((h << 5) - h) + pw.charCodeAt(i);
+    h = h & h;
+  }
+  return 'h' + Math.abs(h).toString(36);
+}
+function validateEmail(e) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
+
+// ── PREDICTION ENGINE ──
+function predictGrade(marks, study, attend, gpa) {
+  var score = (marks * 0.40) + (Math.min(study, 10) * 10 * 0.20) + (attend * 0.20) + (gpa * 10 * 0.20);
+  score = Math.round(score);
+  var grade, desc, pct;
+  if (score >= 88)      { grade='A+'; desc='Outstanding';    pct='90-100%'; }
+  else if (score >= 80) { grade='A';  desc='Excellent';      pct='80-89%'; }
+  else if (score >= 70) { grade='B+'; desc='Very Good';      pct='70-79%'; }
+  else if (score >= 60) { grade='B';  desc='Good';           pct='60-69%'; }
+  else if (score >= 50) { grade='C+'; desc='Average';        pct='50-59%'; }
+  else if (score >= 40) { grade='C';  desc='Below Average';  pct='40-49%'; }
+  else if (score >= 30) { grade='D';  desc='Poor';           pct='30-39%'; }
+  else                  { grade='F';  desc='Fail';           pct='<30%'; }
+  return { grade:grade, desc:desc, pct:pct, score:score };
+}
+
+function gradeColor(g) {
+  if (!g) return 'var(--muted)';
+  var s = String(g).toUpperCase();
+  if (s==='A+' || s==='A')  return 'var(--accent3)';
+  if (s==='B+' || s==='B')  return 'var(--accent)';
+  if (s==='C+' || s==='C')  return 'var(--warn)';
+  return 'var(--accent2)';
+}
+
+function getFeedback(marks, study, attend, gpa) {
+  var g=[], w=[];
+  if (marks >= 80)      g.push('Strong marks — top performance zone.');
+  else if (marks >= 60) w.push('Marks are average. Aim for 80+ for a stronger grade.');
+  else                  w.push('Marks below 60 — intensive revision of core topics needed.');
+  if (study >= 5)       g.push('Excellent study discipline. Consistency is key.');
+  else if (study >= 3)  w.push('Increase to 5+ hrs/day for significantly better outcomes.');
+  else                  w.push('Under 3 hrs/day is very low — build a structured timetable.');
+  if (attend >= 90)     g.push('Near-perfect attendance — absorbing all classroom content.');
+  else if (attend >= 75)w.push('Attendance acceptable. Push to 90%+ for the best edge.');
+  else                  w.push('Below 75% attendance risks exam eligibility.');
+  if (gpa >= 8)         g.push('Excellent GPA history — sustained academic performance.');
+  else if (gpa >= 6)    w.push('Solid GPA — target 8.0+ by focusing on weaker subjects.');
+  else                  w.push('Low previous GPA — create a structured recovery plan.');
+  return { g:g, w:w };
+}
+
+// ── APP STATE ──
+var state = {
+  loggedIn: false, user: null, role: null, tab: 0,
+  history: [], lastResult: null,
+  cmpCount: 3, cmpResults: null,
+  loginErr: '', loginOk: '',
+  authMode: 'login',   // 'login' | 'signup'
+  signupRole: 'Student',
+  charts: {}
+};
+
+// ── RESTORE SESSION ON LOAD ──
+(function() {
+  var sess = getSession();
+  if (sess && sess.email) {
+    var ud = getUserData(sess.email);
+    if (ud) {
+      state.loggedIn = true;
+      state.user = { name: ud.name, email: sess.email };
+      state.role = ud.role;
+      state.history = ud.history || [];
+      state.cmpCount = ud.cmpCount || 3;
+      state.cmpResults = ud.cmpResults || null;
+    }
+  }
+})();
+
+// ── CHART HELPERS ──
+function killChart(id) {
+  if (state.charts[id]) { state.charts[id].destroy(); delete state.charts[id]; }
+}
+var CO = { color:'rgba(230,230,255,.65)', grid:{color:'rgba(255,255,255,.05)'}, font:{family:"'DM Sans',sans-serif",size:11} };
+function cOpts(ex) {
+  ex = ex || {};
+  return Object.assign({
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{labels:{color:CO.color,font:CO.font}}, tooltip:{bodyFont:CO.font,titleFont:CO.font} },
+    scales:{ x:{ticks:{color:CO.color,font:CO.font},grid:CO.grid}, y:{ticks:{color:CO.color,font:CO.font},grid:CO.grid} }
+  }, ex);
+}
+function mkChart(id, cfg) {
+  killChart(id);
+  var c = document.getElementById(id);
+  if (!c) return;
+  state.charts[id] = new Chart(c, cfg);
+}
+
+// ── MAIN RENDER ──
+function render() {
+  var root = document.getElementById('root');
+  if (!state.loggedIn) {
+    root.innerHTML = renderLogin();
+    var lbtn = document.getElementById('lbtn');
+    var swbtn = document.getElementById('switch-btn');
+    var pwEl = document.getElementById('l-pw');
+    if (lbtn) lbtn.onclick = state.authMode==='login' ? doLogin : doSignup;
+    if (swbtn) swbtn.onclick = function() {
+      state.authMode = state.authMode==='login' ? 'signup' : 'login';
+      state.loginErr=''; state.loginOk='';
+      render();
+    };
+    if (pwEl) pwEl.onkeydown = function(e){ if(e.key==='Enter'){ state.authMode==='login'?doLogin():doSignup(); } };
+    return;
+  }
+  root.innerHTML = renderTopbar() + renderTabs() + '<div class="content">' + renderMain() + '</div>';
+  bindDash();
+  setTimeout(buildCharts, 80);
+}
+
+// ── AUTH ──
+function renderLogin() {
+  var isSignup = state.authMode === 'signup';
+  var h = '<div class="login-wrap"><div class="logo">Grade<span>Cast</span> AI</div>' +
+    '<div class="logo-sub">AI-Powered Academic Performance Predictor</div>' +
+    '<div class="lcard"><h2>' + (isSignup ? '✨ Create Account' : '🔐 Welcome Back') + '</h2>';
+  if (state.loginErr) h += '<div class="err">⚠️ ' + state.loginErr + '</div>';
+  if (state.loginOk)  h += '<div class="ok">✅ ' + state.loginOk + '</div>';
+  if (isSignup) h += '<div class="fg"><label>Full Name</label><input id="l-name" type="text" placeholder="Your full name" autocomplete="name"/></div>';
+  h += '<div class="fg"><label>Email Address</label><input id="l-email" type="email" placeholder="you@example.com" autocomplete="email"/></div>';
+  h += '<div class="fg"><label>Password</label><input id="l-pw" type="password" placeholder="' + (isSignup?'Create a password (min 6 chars)':'Enter your password') + '" autocomplete="' + (isSignup?'new-password':'current-password') + '"/></div>';
+  if (isSignup) {
+    h += '<div style="font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;margin-bottom:.5rem">I am a</div>';
+    h += '<div class="role-row">';
+    h += '<div class="role-opt' + (state.signupRole==='Student'?' sel':'') + '" onclick="setRole(\'Student\')">🎓 Student</div>';
+    h += '<div class="role-opt' + (state.signupRole==='Teacher'?' sel t':'') + '" onclick="setRole(\'Teacher\')">👨‍🏫 Teacher</div>';
+    h += '</div>';
+  }
+  h += '<button class="lbtn" id="lbtn">' + (isSignup?'Create Account →':'Sign In →') + '</button>';
+  h += '<div class="divider">' + (isSignup?'already have an account?':'new here?') + '</div>';
+  h += '<button class="lbtn sec" id="switch-btn">' + (isSignup?'Sign In Instead':'Create Free Account') + '</button>';
+  h += '</div></div>';
+  return h;
+}
+
+function setRole(r) { state.signupRole=r; render(); }
+
+function doLogin() {
+  var email = (document.getElementById('l-email').value||'').trim().toLowerCase();
+  var pw    = (document.getElementById('l-pw').value||'');
+  state.loginErr=''; state.loginOk='';
+  if (!email||!pw) { state.loginErr='Please fill in all fields.'; render(); return; }
+  if (!validateEmail(email)) { state.loginErr='Please enter a valid email address.'; render(); return; }
+  var ud = getUserData(email);
+  if (!ud) { state.loginErr='No account found. Please create a free account first.'; render(); return; }
+  if (ud.password !== hashPw(pw)) { state.loginErr='Incorrect password. Please try again.'; render(); return; }
+  saveSession(email);
+  state.loggedIn=true; state.user={name:ud.name,email:email}; state.role=ud.role;
+  state.history=ud.history||[]; state.cmpCount=ud.cmpCount||3; state.cmpResults=ud.cmpResults||null;
+  state.lastResult=null; state.tab=0;
+  render();
+}
+
+function doSignup() {
+  var name  = (document.getElementById('l-name').value||'').trim();
+  var email = (document.getElementById('l-email').value||'').trim().toLowerCase();
+  var pw    = (document.getElementById('l-pw').value||'');
+  state.loginErr=''; state.loginOk='';
+  if (!name||!email||!pw) { state.loginErr='Please fill in all fields.'; render(); return; }
+  if (!validateEmail(email)) { state.loginErr='Please enter a valid email address.'; render(); return; }
+  if (pw.length<6) { state.loginErr='Password must be at least 6 characters.'; render(); return; }
+  var users=getUsers();
+  if (users[email]) { state.loginErr='An account already exists for this email. Please sign in.'; render(); return; }
+  users[email]={name:name,role:state.signupRole,password:hashPw(pw),history:[],cmpCount:3,cmpResults:null};
+  saveUsers(users);
+  state.loginOk='Account created! Sign in below.'; state.authMode='login';
+  render();
+}
+
+// ── TOPBAR ──
+function renderTopbar() {
+  return '<div class="topbar"><div class="tlogo">Grade<span>Cast</span></div>' +
+    '<div class="tright">' +
+    '<span class="uname">👋 ' + state.user.name + '</span>' +
+    '<span class="rbadge' + (state.role==='Teacher'?' t':'') + '">' + state.role + '</span>' +
+    '<button class="logoutbtn" id="lb">Logout</button>' +
+    '</div></div>';
+}
+
+// ── PERSIST USER DATA TO LOCALSTORAGE ──
+function persistData() {
+  if (!state.user || !state.user.email) return;
+  var users = getUsers();
+  if (!users[state.user.email]) return;
+  users[state.user.email].history    = state.history;
+  users[state.user.email].cmpCount   = state.cmpCount;
+  users[state.user.email].cmpResults = state.cmpResults;
+  saveUsers(users);
+}
+
+// ── TABS ──
+function renderTabs() {
+  var tabs = state.role==='Student'
+    ? ['📊 Predict','📜 History','📈 Analytics']
+    : ['🔮 Predict','👥 Compare','📊 Analytics'];
+  var html = '<div class="tabs">';
+  for (var i=0; i<tabs.length; i++) {
+    var badge = (i===1 && state.history.length) ? '<span class="cbadge">'+state.history.length+'</span>' : '';
+    html += '<button class="tab' + (state.tab===i?' active':'') + '" data-i="' + i + '">' + tabs[i] + badge + '</button>';
+  }
+  return html + '</div>';
+}
+
+function renderMain() {
+  return state.role==='Student' ? renderStudentMain() : renderTeacherMain();
+}
+
+// ── SLIDER HTML ──
+function slHtml(id, lbl, mn, mx, val, step, cls) {
+  var sfx = mx===100 ? '%' : mx===12 ? ' hrs' : ' GPA';
+  return '<div class="sg"><div class="sl-row"><span>' + lbl + '</span><strong id="' + id + 'v">' + val + sfx + '</strong></div>' +
+    '<input type="range" id="' + id + '" class="' + (cls||'') + '" min="' + mn + '" max="' + mx + '" step="' + step + '" value="' + val + '"/></div>';
+}
+function bindSl(id) {
+  var el = document.getElementById(id);
+  var vl = document.getElementById(id+'v');
+  if (!el || !vl) return;
+  var mx = parseFloat(el.max);
+  var sfx = mx===100 ? '%' : mx===12 ? ' hrs' : ' GPA';
+  el.oninput = function() { vl.textContent = parseFloat(el.value) + sfx; };
+}
+
+// ══════════════════════════════════════
+// STUDENT
+// ══════════════════════════════════════
+function renderStudentMain() {
+  if (state.tab===0) return renderSPredict();
+  if (state.tab===1) return renderSHistory();
+  return renderSAnalytics();
+}
+
+function renderSPredict() {
+  var r = state.lastResult;
+  return '<div class="stitle">🎓 Grade Predictor</div>' +
+    '<p class="sdesc">Adjust your academic details to get an instant AI-powered grade forecast.</p>' +
+    '<div class="g2">' +
+    '<div class="card">' +
+      slHtml('sm','📊 Marks (out of 100)',0,100,65,1,'') +
+      slHtml('ss','📚 Daily Study Hours',0,12,4,1,'g') +
+      slHtml('sa','📅 Attendance',0,100,80,1,'o') +
+      slHtml('sg','🎓 Previous GPA',0,10,7,0.1,'p') +
+      '<button class="pbtn" id="spbtn">🚀 Predict My Grade</button>' +
+      '<p class="api-note">⚡ On-device AI prediction engine</p>' +
+    '</div>' +
+    '<div>' + (r && r.grade ? renderRCard(r) : '<div class="ph"><div class="ph-icon">🎯</div><span>Your grade prediction will appear here</span></div>') + '</div>' +
+    '</div>';
+}
+
+function renderRCard(r) {
+  var gc = gradeColor(r.grade);
+  var fb = getFeedback(r.inputs.marks, r.inputs.study, r.inputs.attend, r.inputs.gpa);
+  var html = '<div class="rcard">' +
+    '<div class="grade-lbl">Predicted Grade</div>' +
+    '<div class="grade-big" style="color:' + gc + '">' + r.grade + '</div>' +
+    '<div class="grade-pct">' + r.desc + ' &nbsp;·&nbsp; Score: ' + r.score + '/100 &nbsp;·&nbsp; ' + r.pct + '</div>' +
+    '<ul class="flist">';
+  for (var i=0; i<fb.g.length; i++) html += '<li class="g">✅ ' + fb.g[i] + '</li>';
+  for (var j=0; j<fb.w.length; j++) html += '<li class="w">⚠️ ' + fb.w[j] + '</li>';
+  return html + '</ul></div>';
+}
+
+function renderSHistory() {
+  var html = '<div class="stitle">📜 Prediction History</div>' +
+    '<p class="sdesc">All grade predictions from this session.</p>' +
+    '<div class="card" style="padding:0;overflow:hidden">';
+  if (!state.history.length) {
+    html += '<div class="empty">No predictions yet — go to Predict tab to get started! 🎯</div>';
+  } else {
+    html += '<table class="htbl"><thead><tr><th>#</th><th>Time</th><th>Marks</th><th>Study</th><th>Attend</th><th>GPA</th><th>Score</th><th>Grade</th></tr></thead><tbody>';
+    for (var i=0; i<state.history.length; i++) {
+      var h = state.history[i];
+      var gc = gradeColor(h.grade);
+      html += '<tr><td style="color:var(--muted)">' + (state.history.length-i) + '</td>' +
+        '<td style="color:var(--muted)">' + h.time + '</td>' +
+        '<td>' + h.marks + '</td><td>' + h.study + 'h</td><td>' + h.attend + '%</td><td>' + h.gpa + '</td>' +
+        '<td style="color:var(--muted)">' + h.score + '/100</td>' +
+        '<td><span class="gpill" style="color:' + gc + ';background:' + gc + '22;border:1px solid ' + gc + '44">' + h.grade + '</span></td></tr>';
+    }
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+  if (state.history.length) html += '<button class="clr-btn" id="clr-hist">🗑️ Clear History</button>';
+  return html;
+}
+
+function renderSAnalytics() {
+  var has = state.history.length >= 2;
+  return '<div class="stitle">📈 Performance Analytics</div>' +
+    '<p class="sdesc">Visual breakdown of your inputs across predictions.</p>' +
+    (!has ? '<div class="card"><div class="empty">Make at least 2 predictions to unlock analytics. 📊</div></div>' :
+    '<div class="g2">' +
+      '<div class="card"><div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Marks Over Time</div><div class="chart-wrap"><canvas id="ch-marks"></canvas></div></div>' +
+      '<div class="card"><div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Study Hours</div><div class="chart-wrap"><canvas id="ch-study"></canvas></div></div>' +
+    '</div>' +
+    '<div class="card" style="margin-top:1rem"><div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Attendance & GPA</div><div class="chart-wrap"><canvas id="ch-multi"></canvas></div></div>');
+}
+
+// ══════════════════════════════════════
+// TEACHER
+// ══════════════════════════════════════
+function renderTeacherMain() {
+  if (state.tab===0) return renderTPredict();
+  if (state.tab===1) return renderTCompare();
+  return renderTAnalytics();
+}
+
+function renderTPredict() {
+  var r = state.lastResult;
+  return '<div class="stitle">🔮 Grade Predictor</div>' +
+    '<p class="sdesc">Test predictions with custom student input values.</p>' +
+    '<div class="g2">' +
+    '<div class="card">' +
+      slHtml('tm','📊 Marks',0,100,72,1,'') +
+      slHtml('ts','📚 Study Hours/day',0,12,5,1,'g') +
+      slHtml('ta','📅 Attendance %',0,100,85,1,'o') +
+      slHtml('tg','🎓 Previous GPA',0,10,7.5,0.1,'p') +
+      '<button class="pbtn" id="tpbtn">🚀 Predict Grade</button>' +
+      '<p class="api-note">⚡ On-device AI prediction engine</p>' +
+    '</div>' +
+    '<div>' + (r && r.grade ? renderRCard(r) : '<div class="ph"><div class="ph-icon">🔮</div><span>Prediction appears here</span></div>') + '</div>' +
+    '</div>';
+}
+
+function renderTCompare() {
+  var n = state.cmpCount;
+  var colors = ['#6C63FF','#43E8A0','#FF6584','#FFB347','#c084fc'];
+  var html = '<div class="stitle">👥 Compare Students</div>' +
+    '<p class="sdesc">Predict and compare grades for 2–5 students side by side.</p>' +
+    '<div class="card" style="margin-bottom:1rem">' +
+    '<div style="font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Number of students</div>' +
+    '<div class="nc-sel">';
+  [2,3,4,5].forEach(function(v) {
+    html += '<button class="nc-btn' + (v===n?' sel':'') + '" onclick="setCmp(' + v + ')">' + v + '</button>';
+  });
+  html += '</div></div>';
+
+  for (var i=0; i<n; i++) {
+    var c = colors[i % colors.length];
+    var defMarks = 55 + i*8;
+    var defStudy = 2 + i;
+    var defAttend = 65 + i*6;
+    var defGpa = (5.5 + i*0.6).toFixed(1);
+    html += '<div class="srow">' +
+      '<div class="srow-hdr"><span class="dot" style="background:' + c + '"></span>Student ' + (i+1) + '</div>' +
+      '<div class="cgrid">' +
+      '<div class="ni"><label>Name</label><input type="text" id="cn' + i + '" value="Student ' + (i+1) + '"/></div>' +
+      '<div class="ni"><label>Marks /100</label><input type="number" id="cm' + i + '" value="' + defMarks + '" min="0" max="100"/></div>' +
+      '<div class="ni"><label>Study Hrs</label><input type="number" id="cs' + i + '" value="' + defStudy + '" min="0" max="12"/></div>' +
+      '<div class="ni"><label>Attend %</label><input type="number" id="ca' + i + '" value="' + defAttend + '" min="0" max="100"/></div>' +
+      '<div class="ni"><label>GPA</label><input type="number" id="cg' + i + '" value="' + defGpa + '" min="0" max="10" step="0.1"/></div>' +
+      '</div></div>';
+  }
+
+  html += '<button class="cbtn" id="cmpbtn">📊 Compare All Students</button>';
+
+  if (state.cmpResults) {
+    html += renderCmpResults();
+  }
+  return html;
+}
+
+function renderCmpResults() {
+  var res = state.cmpResults;
+  var bestM = 0, bestS = 0;
+  for (var k=0; k<res.length; k++) {
+    if (res[k].marks > bestM) bestM = res[k].marks;
+    if (res[k].score > bestS) bestS = res[k].score;
+  }
+
+  var html = '<div style="margin-top:1.4rem">' +
+    '<table class="ctbl"><thead><tr><th>Student</th><th>Marks</th><th>Study</th><th>Attend</th><th>GPA</th><th>Score</th><th>Grade</th></tr></thead><tbody>';
+  for (var i=0; i<res.length; i++) {
+    var r = res[i];
+    var gc = gradeColor(r.grade);
+    html += '<tr>' +
+      '<td style="font-weight:600">' + r.name + '</td>' +
+      '<td class="' + (r.marks===bestM?'best':r.marks<50?'low':'') + '">' + r.marks + '</td>' +
+      '<td>' + r.study + 'h</td>' +
+      '<td>' + r.attend + '%</td>' +
+      '<td>' + r.gpa + '</td>' +
+      '<td class="' + (r.score===bestS?'best':'') + '">' + r.score + '/100</td>' +
+      '<td><span class="gpill" style="color:' + gc + ';background:' + gc + '22;border:1px solid ' + gc + '44">' + r.grade + '</span></td>' +
+      '</tr>';
+  }
+  html += '</tbody></table>';
+  html += '<div class="card" style="margin-top:1rem"><div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Performance Comparison</div><div class="chart-wrap" style="height:260px"><canvas id="ch-cmp"></canvas></div></div>';
+  html += '<div class="card" style="margin-top:1rem"><div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Score Ranking</div><div class="chart-wrap"><canvas id="ch-rank"></canvas></div></div>';
+  html += '</div>';
+  return html;
+}
+
+function renderTAnalytics() {
+  return '<div class="stitle">📊 Class Analytics</div>' +
+    '<p class="sdesc">Overview of class performance metrics and distribution.</p>' +
+    '<div class="g3">' +
+      '<div class="sc"><div class="sc-lbl">Class Avg Marks</div><div class="sc-val c-a">74.2</div></div>' +
+      '<div class="sc"><div class="sc-lbl">Avg Attendance</div><div class="sc-val c-g">81%</div></div>' +
+      '<div class="sc"><div class="sc-lbl">At-Risk Students</div><div class="sc-val c-w">4</div></div>' +
+    '</div>' +
+    '<div class="g2" style="margin-top:1rem">' +
+      '<div class="card"><div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Grade Distribution</div><div class="chart-wrap"><canvas id="ch-dist"></canvas></div></div>' +
+      '<div class="card"><div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Study vs Marks</div><div class="chart-wrap"><canvas id="ch-scat"></canvas></div></div>' +
+    '</div>';
+}
+
+// ── BIND DASHBOARD ──
+function bindDash() {
+  // Logout
+  var lb = document.getElementById('lb');
+  if (lb) lb.onclick = function() {
+    persistData();
+    clearSession();
+    state.loggedIn=false; state.user=null; state.role=null;
+    state.lastResult=null; state.history=[]; state.cmpResults=null;
+    state.authMode='login'; state.loginErr=''; state.loginOk='';
+    render();
+  };
+
+  // Tabs
+  var tabs = document.querySelectorAll('.tab');
+  for (var i=0; i<tabs.length; i++) {
+    (function(t){
+      t.onclick = function() {
+        state.tab = parseInt(t.getAttribute('data-i'));
+        state.lastResult = null;
+        render();
+      };
+    })(tabs[i]);
+  }
+
+  // Sliders
+  ['sm','ss','sa','sg','tm','ts','ta','tg'].forEach(bindSl);
+
+  // Student predict
+  var spbtn = document.getElementById('spbtn');
+  if (spbtn) spbtn.onclick = function() {
+    var marks  = parseFloat(document.getElementById('sm').value);
+    var study  = parseFloat(document.getElementById('ss').value);
+    var attend = parseFloat(document.getElementById('sa').value);
+    var gpa    = parseFloat(document.getElementById('sg').value);
+    var res = predictGrade(marks, study, attend, gpa);
+    state.lastResult = { grade:res.grade, desc:res.desc, pct:res.pct, score:res.score, inputs:{marks:marks,study:study,attend:attend,gpa:gpa} };
+    state.history.unshift({ time:new Date().toLocaleTimeString(), marks:marks, study:study, attend:attend, gpa:gpa, grade:res.grade, score:res.score });
+    persistData();
+    render();
+  };
+
+  // Teacher predict
+  var tpbtn = document.getElementById('tpbtn');
+  if (tpbtn) tpbtn.onclick = function() {
+    var marks  = parseFloat(document.getElementById('tm').value);
+    var study  = parseFloat(document.getElementById('ts').value);
+    var attend = parseFloat(document.getElementById('ta').value);
+    var gpa    = parseFloat(document.getElementById('tg').value);
+    var res = predictGrade(marks, study, attend, gpa);
+    state.lastResult = { grade:res.grade, desc:res.desc, pct:res.pct, score:res.score, inputs:{marks:marks,study:study,attend:attend,gpa:gpa} };
+    render();
+  };
+
+  // Compare button — read inputs at click time, no async needed
+  var cmpbtn = document.getElementById('cmpbtn');
+  if (cmpbtn) cmpbtn.onclick = function() {
+    var n = state.cmpCount;
+    var results = [];
+    for (var i=0; i<n; i++) {
+      var nameEl   = document.getElementById('cn' + i);
+      var marksEl  = document.getElementById('cm' + i);
+      var studyEl  = document.getElementById('cs' + i);
+      var attendEl = document.getElementById('ca' + i);
+      var gpaEl    = document.getElementById('cg' + i);
+      if (!nameEl || !marksEl || !studyEl || !attendEl || !gpaEl) continue;
+      var name   = nameEl.value || ('Student ' + (i+1));
+      var marks  = parseFloat(marksEl.value)  || 0;
+      var study  = parseFloat(studyEl.value)  || 0;
+      var attend = parseFloat(attendEl.value) || 0;
+      var gpa    = parseFloat(gpaEl.value)    || 0;
+      var res    = predictGrade(marks, study, attend, gpa);
+      results.push({ name:name, marks:marks, study:study, attend:attend, gpa:gpa, grade:res.grade, score:res.score, desc:res.desc });
+    }
+    state.cmpResults = results;
+    persistData();
+    render();
+  };
+
+  var ch = document.getElementById('clr-hist');
+  if (ch) ch.onclick = function() { state.history=[]; persistData(); render(); };
+}
+
+// ── SET COMPARE COUNT ──
+function setCmp(n) {
+  state.cmpCount = n;
+  state.cmpResults = null;
+  persistData();
+  render();
+}
+
+// ── BUILD CHARTS ──
+function buildCharts() {
+  // Student analytics charts
+  if (state.history.length >= 2) {
+    var rev = state.history.slice().reverse();
+    var lbls = rev.map(function(_,i){ return '#'+(i+1); });
+    mkChart('ch-marks',{type:'line',data:{labels:lbls,datasets:[{label:'Marks',data:rev.map(function(h){return h.marks;}),borderColor:'#6C63FF',backgroundColor:'rgba(108,99,255,.12)',fill:true,tension:.4,pointBackgroundColor:'#6C63FF',pointRadius:4}]},options:cOpts()});
+    mkChart('ch-study',{type:'bar',data:{labels:lbls,datasets:[{label:'Study Hrs',data:rev.map(function(h){return h.study;}),backgroundColor:'rgba(67,232,160,.3)',borderColor:'#43E8A0',borderWidth:1.5,borderRadius:6}]},options:cOpts()});
+    mkChart('ch-multi',{type:'line',data:{labels:lbls,datasets:[
+      {label:'Attendance %',data:rev.map(function(h){return h.attend;}),borderColor:'#FFB347',fill:false,tension:.4,pointRadius:3},
+      {label:'GPA ×10',data:rev.map(function(h){return Math.round(h.gpa*10);}),borderColor:'#c084fc',fill:false,tension:.4,pointRadius:3},
+      {label:'Score',data:rev.map(function(h){return h.score;}),borderColor:'#43E8A0',fill:false,tension:.4,pointRadius:3,borderDash:[4,3]}
+    ]},options:cOpts()});
+  }
+
+  // Compare charts
+  if (state.cmpResults && state.cmpResults.length) {
+    var res = state.cmpResults;
+    var names = res.map(function(r){return r.name;});
+    var pal = ['#6C63FF','#43E8A0','#FF6584','#FFB347','#c084fc'];
+    mkChart('ch-cmp',{type:'bar',data:{labels:names,datasets:[
+      {label:'Marks /100',   data:res.map(function(r){return r.marks;}),  backgroundColor:pal.map(function(c){return c+'40';}), borderColor:pal, borderWidth:1.5, borderRadius:5},
+      {label:'Study Hrs ×8', data:res.map(function(r){return r.study*8;}),backgroundColor:'rgba(67,232,160,.2)',borderColor:'#43E8A0',borderWidth:1.5,borderRadius:5},
+      {label:'Attendance %', data:res.map(function(r){return r.attend;}), backgroundColor:'rgba(255,179,71,.2)', borderColor:'#FFB347', borderWidth:1.5,borderRadius:5}
+    ]},options:cOpts({scales:{x:{ticks:{color:CO.color,font:CO.font},grid:CO.grid},y:{ticks:{color:CO.color,font:CO.font},grid:CO.grid,max:100}}})});
+    mkChart('ch-rank',{type:'bar',data:{labels:names,datasets:[
+      {label:'Overall Score',data:res.map(function(r){return r.score;}),backgroundColor:pal.map(function(c){return c+'50';}),borderColor:pal,borderWidth:1.5,borderRadius:8}
+    ]},options:cOpts({indexAxis:'y',scales:{x:{ticks:{color:CO.color,font:CO.font},grid:CO.grid,max:100},y:{ticks:{color:CO.color,font:CO.font},grid:CO.grid}}})});
+  }
+
+  // Teacher analytics
+  if (document.getElementById('ch-dist')) {
+    mkChart('ch-dist',{type:'doughnut',data:{labels:['A / A+','B / B+','C / C+','D / Fail'],datasets:[{data:[28,35,22,15],backgroundColor:['rgba(67,232,160,.7)','rgba(108,99,255,.7)','rgba(255,179,71,.7)','rgba(255,101,132,.7)'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CO.color,font:CO.font}}}}});
+  }
+  if (document.getElementById('ch-scat')) {
+    mkChart('ch-scat',{type:'scatter',data:{datasets:[{label:'Students',data:[{x:2,y:48},{x:3,y:58},{x:3.5,y:62},{x:4,y:70},{x:4.5,y:74},{x:5,y:79},{x:6,y:83},{x:7,y:88},{x:8,y:91},{x:9,y:95}],backgroundColor:'rgba(108,99,255,.6)',pointRadius:7,pointHoverRadius:9}]},options:cOpts({scales:{x:{ticks:{color:CO.color,font:CO.font},grid:CO.grid,title:{display:true,text:'Study Hours/Day',color:'rgba(200,200,255,.4)',font:{family:"'DM Sans',sans-serif",size:11}}},y:{ticks:{color:CO.color,font:CO.font},grid:CO.grid,title:{display:true,text:'Marks',color:'rgba(200,200,255,.4)',font:{family:"'DM Sans',sans-serif",size:11}}}}})});
+  }
+}
+
+// ── START ──
+render();
+</script>
+</body>
+</html>
